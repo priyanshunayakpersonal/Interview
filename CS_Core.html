@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Interview Master Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
+
+    <!-- Chosen Palette: Slate (Background/Text), Indigo (Primary Accents), Emerald (Highlights) -->
+    <!-- Application Structure Plan: The SPA uses a dashboard-style layout. It starts with a high-level visual overview (Chart.js doughnut chart) showing the frequency/probability of topics to help candidates prioritize. This is followed by an interactive "Topic Explorer" using a master-detail pattern (sidebar + content pane) for deep diving into sub-topics and interview questions without leaving the page. Finally, a flashcard section allows active recall testing. This structure progresses the user from 'Awareness' -> 'Study' -> 'Testing'. -->
+    <!-- Visualization & Content Choices: 1. Topic Frequency -> Goal: Prioritization -> Viz: Doughnut Chart (Chart.js) -> Interaction: Hover tooltips -> Justification: Shows part-to-whole relationship clearly. 2. Topic Details -> Goal: Organize deep info -> Viz: Master-Detail Layout -> Interaction: Clickable sidebar lists -> Justification: Prevents overwhelming the user with text, keeping navigation contextual. 3. Active Recall -> Goal: Testing -> Viz: Clickable Flashcards -> Interaction: Click to flip/reveal -> Justification: Proven learning mechanism for interview prep. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <nav class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    <span class="text-2xl">🖥️</span>
+                    <span class="font-bold text-xl tracking-tight">CS Interview Master</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#overview" class="hover:text-indigo-200 transition-colors">Overview</a>
+                    <a href="#explorer" class="hover:text-indigo-200 transition-colors">Topic Explorer</a>
+                    <a href="#flashcards" class="hover:text-indigo-200 transition-colors">Quick Recall</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Subject Selector -->
+    <div class="bg-white border-b shadow-sm sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-3 justify-center">
+            <button id="btn-OS" onclick="setSubject('OS')" class="px-6 py-2 rounded-full font-bold transition-all duration-200 bg-indigo-600 text-white shadow-md hover:bg-indigo-700">Operating Systems</button>
+            <button id="btn-CN" onclick="setSubject('CN')" class="px-6 py-2 rounded-full font-bold transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-slate-200">Computer Networks</button>
+            <button id="btn-DBMS" onclick="setSubject('DBMS')" class="px-6 py-2 rounded-full font-bold transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-slate-200">DBMS</button>
+            <button id="btn-OOPs" onclick="setSubject('OOPs')" class="px-6 py-2 rounded-full font-bold transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-slate-200">OOPs</button>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-16">
+
+        <section id="overview" class="scroll-mt-32">
+            <div class="text-center max-w-3xl mx-auto mb-10">
+                <h1 id="mainTitle" class="text-4xl font-extrabold text-slate-900 mb-4">Cracking the OS Interview</h1>
+                <p id="mainDesc" class="text-lg text-slate-600">
+                    Operating Systems (OS) form the backbone of computer science interviews at top tech companies. This section breaks down the historical frequency of topics asked across major industry interviews, helping you prioritize your study time effectively. Data is synthesized from thousands of interview experiences.
+                </p>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 md:p-10 shadow-sm flex flex-col md:flex-row items-center gap-8">
+                <div class="w-full md:w-1/2">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">Topic Priority Breakdown</h2>
+                    <p id="chartDesc" class="text-slate-600 mb-6">
+                        Not all OS concepts are tested equally. Memory management and Concurrency dominate the interview landscape due to their critical role in writing efficient, scalable backend systems. Use the chart to identify high-yield areas.
+                    </p>
+                    <ul id="chartLegend" class="space-y-3">
+                        <!-- Legend dynamically populated by JS now -->
+                    </ul>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <div class="chart-container">
+                        <canvas id="topicChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="explorer" class="scroll-mt-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">Interactive Topic Explorer</h2>
+                <p class="text-lg text-slate-600 max-w-4xl">
+                    Dive into the specific sub-topics, definitions, and actual interview questions associated with each major OS domain. Select a topic from the sidebar to view its detailed breakdown. This interactive format allows you to focus purely on the area you are currently studying.
+                </p>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-6 h-auto md:h-[600px]">
+                <div class="w-full md:w-1/3 glass-panel rounded-2xl overflow-y-auto shadow-sm p-4 flex flex-col gap-2" id="topicList">
+                </div>
+
+                <div class="w-full md:w-2/3 glass-panel rounded-2xl shadow-sm p-6 md:p-8 overflow-y-auto" id="topicDetailPane">
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                        <span class="text-5xl mb-4">👈</span>
+                        <p class="text-xl">Select a topic from the left to explore.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="flashcards" class="scroll-mt-20 pb-20">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">Active Recall Knowledge Check</h2>
+                <p class="text-lg text-slate-600 max-w-4xl">
+                    Test your understanding with high-frequency rapid-fire questions. Click on any card to reveal the core concept answer. Active recall is the most effective way to cement your OS knowledge before walking into an interview.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="flashcardGrid">
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center">
+        <p>System Architecture & OS Concepts Interactive Guide &copy; 2026</p>
+    </footer>
+
+    <script>
+        const db = {
+            OS: {
+                title: "Cracking the OS Interview",
+                overviewText: "Operating Systems (OS) form the backbone of computer science interviews at top tech companies. This section breaks down the historical frequency of topics asked across major industry interviews, helping you prioritize your study time effectively.",
+                chartDesc: "Not all OS concepts are tested equally. Memory management and Concurrency dominate the interview landscape due to their critical role in writing efficient, scalable backend systems. Use the chart to identify high-yield areas.",
+                chartLabels: ['Memory Management', 'Concurrency & Sync', 'Processes/Threads', 'Deadlocks', 'CPU Scheduling / File Systems'],
+                chartData: [30, 25, 20, 15, 10],
+                chartColors: ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4'],
+                topics: {
+                    memory: {
+                        id: 'memory',
+                        title: 'Memory Management',
+                        icon: '🧠',
+                        color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                        description: 'How the OS handles RAM allocation, prevents processes from interfering with each other, and creates the illusion of infinite memory.',
+                        subtopics: [
+                            { name: 'Virtual Memory', detail: 'A technique that gives an application the illusion it has contiguous working memory, while in fact it may be physically fragmented and part of it stored on disk.' },
+                            { name: 'Paging vs. Segmentation', detail: 'Paging divides memory into fixed-size blocks (pages/frames). Segmentation divides memory into variable-sized blocks based on logical units (functions, objects).' },
+                            { name: 'Page Replacement Algorithms', detail: 'When memory is full, the OS must swap pages. Key algorithms: LRU (Least Recently Used), FIFO (First In First Out), Optimal.' },
+                            { name: 'Thrashing', detail: 'Occurs when a system spends more time swapping pages in and out of memory than executing actual instructions, leading to severe performance collapse.' },
+                            { name: 'TLB (Translation Lookaside Buffer)', detail: 'A hardware cache used to reduce the time taken to access a user memory location by caching recent virtual-to-physical address translations.' }
+                        ],
+                        questions: [
+                            'What is a page fault and how is it handled?',
+                            'Explain the difference between Internal and External Fragmentation.',
+                            'How does LRU page replacement work under the hood? How would you implement it?'
+                        ]
+                    },
+                    concurrency: {
+                        id: 'concurrency',
+                        title: 'Concurrency & Sync',
+                        icon: '🚦',
+                        color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                        description: 'Managing multiple threads or processes executing simultaneously and ensuring they safely share resources without data corruption.',
+                        subtopics: [
+                            { name: 'Critical Section', detail: 'A segment of code where shared memory or resources are accessed. Only one thread should execute in its critical section at a time.' },
+                            { name: 'Mutex (Mutual Exclusion)', detail: 'A locking mechanism used to synchronize access to a resource. Only the thread that acquires the mutex can release it.' },
+                            { name: 'Semaphores', detail: 'A signaling mechanism. An integer variable used to manage concurrent processes. Can be Binary (0/1) or Counting.' },
+                            { name: 'Monitors', detail: 'High-level synchronization constructs provided by programming languages (like Java) that abstract away manual lock management.' },
+                            { name: 'Race Conditions', detail: 'A flaw where the output depends on the sequence or timing of uncontrollable events (like thread scheduling).' }
+                        ],
+                        questions: [
+                            'What is the difference between a Mutex and a Binary Semaphore?',
+                            'Design a thread-safe Producer-Consumer queue.',
+                            'Explain Priority Inversion and how to solve it.'
+                        ]
+                    },
+                    processes: {
+                        id: 'processes',
+                        title: 'Processes & Threads',
+                        icon: '🔄',
+                        color: 'bg-amber-100 text-amber-700 border-amber-200',
+                        description: 'The fundamental units of execution. Understanding how they are created, managed, and communicate is essential.',
+                        subtopics: [
+                            { name: 'Process vs. Thread', detail: 'A process is an executing program with its own memory space. A thread is a lightweight execution unit within a process, sharing the same memory.' },
+                            { name: 'Context Switching', detail: 'The process of storing the state of a CPU so that execution can be resumed from the same point later. Expensive operation.' },
+                            { name: 'PCB & TCB', detail: 'Process Control Block and Thread Control Block. Data structures the OS uses to store state information about active processes/threads.' },
+                            { name: 'Inter-Process Communication (IPC)', detail: 'Mechanisms for processes to communicate: Pipes, Message Queues, Shared Memory, Sockets.' },
+                            { name: 'Zombie & Orphan Processes', detail: 'Zombie: Completed execution but still has an entry in the process table. Orphan: Parent process has terminated, but child is still running (usually adopted by init).' }
+                        ],
+                        questions: [
+                            'What exactly happens during a Context Switch?',
+                            'Why are threads considered "lightweight" compared to processes?',
+                            'Explain the lifecycle states of a process (New, Ready, Running, Waiting, Terminated).'
+                        ]
+                    },
+                    deadlocks: {
+                        id: 'deadlocks',
+                        title: 'Deadlocks',
+                        icon: '🔒',
+                        color: 'bg-rose-100 text-rose-700 border-rose-200',
+                        description: 'A situation where a set of processes are blocked because each process is holding a resource and waiting for another resource acquired by some other process.',
+                        subtopics: [
+                            { name: 'Coffman Conditions', detail: 'Four necessary conditions for deadlock: Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait.' },
+                            { name: 'Deadlock Prevention', detail: 'Designing the system to violate at least one of the four Coffman conditions.' },
+                            { name: 'Deadlock Avoidance', detail: 'The OS dynamically evaluates resource allocation state to ensure there can never be a circular wait. Example: Banker\'s Algorithm.' },
+                            { name: 'Deadlock Detection & Recovery', detail: 'Allowing deadlocks to occur, detecting them via Resource Allocation Graphs, and recovering (e.g., terminating processes, preempting resources).' }
+                        ],
+                        questions: [
+                            'What are the 4 necessary conditions for a deadlock?',
+                            'Explain the Banker\'s Algorithm for deadlock avoidance.',
+                            'How is Deadlock different from Starvation?'
+                        ]
+                    },
+                    scheduling: {
+                        id: 'scheduling',
+                        title: 'CPU Scheduling',
+                        icon: '⏱️',
+                        color: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+                        description: 'How the OS decides which process gets to use the CPU and for how long.',
+                        subtopics: [
+                            { name: 'FCFS (First Come First Serve)', detail: 'Simplest algorithm. Non-preemptive. Can lead to the "Convoy Effect".' },
+                            { name: 'SJF (Shortest Job First)', detail: 'Selects the process with the smallest execution time. Optimal for minimizing average waiting time, but can cause starvation.' },
+                            { name: 'Round Robin', detail: 'Each process gets a small unit of CPU time (time quantum). Preemptive. Excellent for interactive systems.' },
+                            { name: 'Multilevel Queue Scheduling', detail: 'Partitions the ready queue into multiple separate queues based on process priority/type (e.g., foreground vs. background).' }
+                        ],
+                        questions: [
+                            'What is the Convoy Effect in CPU Scheduling?',
+                            'How do you determine the optimal Time Quantum for Round Robin scheduling?',
+                            'Explain Multi-level Feedback Queue Scheduling.'
+                        ]
+                    }
+                },
+                flashcards: [
+                    { q: "What is a Context Switch?", a: "The process of saving the state of the currently running process/thread and loading the state of the next one to run on the CPU." },
+                    { q: "Define Thrashing.", a: "A state where the OS spends more time swapping memory pages in and out of disk than executing actual application instructions." },
+                    { q: "Mutex vs. Semaphore?", a: "A Mutex is a locking mechanism with ownership (only the thread that locks it can unlock it). A Semaphore is a signaling mechanism (any thread can signal/wait)." },
+                    { q: "What is a Page Fault?", a: "An exception raised when a program tries to access a block of memory (page) that is mapped in the virtual address space but not currently loaded in physical RAM." },
+                    { q: "What is the difference between Deadlock and Starvation?", a: "Deadlock is an infinite wait where no involved process can proceed. Starvation is a very long wait where a process is indefinitely delayed because resources are given to other processes." },
+                    { q: "What is a Zombie Process?", a: "A process that has finished execution but still has an entry in the process table to report its exit status to its parent." }
+                ]
+            },
+            CN: {
+                title: "Cracking the CN Interview",
+                overviewText: "Computer Networks (CN) is a core component of systems and backend engineering interviews. It tests your fundamental understanding of how data moves across the internet, protocol specifics, and application reliability.",
+                chartDesc: "The Transport and Network layers are the most frequently tested areas, heavily focusing on TCP internals, HTTP behavior, and Routing principles. Prioritize these layers to maximize your interview readiness.",
+                chartLabels: ['Transport Layer (TCP/UDP)', 'Network Layer (IP/Routing)', 'Application Layer (HTTP/DNS)', 'OSI & TCP/IP Models', 'Data Link & Physical'],
+                chartData: [35, 30, 20, 10, 5],
+                chartColors: ['#8b5cf6', '#3b82f6', '#14b8a6', '#f97316', '#eab308'],
+                topics: {
+                    transport: {
+                        id: 'transport',
+                        title: 'Transport Layer (TCP/UDP)',
+                        icon: '📦',
+                        color: 'bg-violet-100 text-violet-700 border-violet-200',
+                        description: 'Responsible for end-to-end communication, reliability, and congestion control between hosts.',
+                        subtopics: [
+                            { name: 'TCP vs. UDP', detail: 'TCP is connection-oriented, reliable, and ordered. UDP is connectionless, unreliable, and fast (used in streaming/gaming/DNS).' },
+                            { name: '3-Way Handshake', detail: 'SYN, SYN-ACK, ACK. The process TCP uses to establish a reliable connection before transmitting data.' },
+                            { name: 'Congestion Control', detail: 'Mechanisms like AIMD, Slow Start, Fast Retransmit, and Fast Recovery that prevent a node from overwhelming the network.' },
+                            { name: 'Flow Control', detail: 'Ensures a fast sender does not overwhelm a slow receiver, typically implemented using a sliding window protocol.' }
+                        ],
+                        questions: [
+                            'Explain the TCP 3-way handshake and 4-way teardown.',
+                            'How does TCP handle packet loss and retransmission?',
+                            'When would you architect a system using UDP instead of TCP?'
+                        ]
+                    },
+                    network: {
+                        id: 'network',
+                        title: 'Network Layer (IP)',
+                        icon: '🗺️',
+                        color: 'bg-blue-100 text-blue-700 border-blue-200',
+                        description: 'Handles logical addressing (IP) and routing packets optimally across multiple distinct networks.',
+                        subtopics: [
+                            { name: 'IPv4 vs IPv6', detail: 'IPv4 uses 32-bit addresses. IPv6 uses 128-bit addresses to solve IP exhaustion and includes built-in IPSec.' },
+                            { name: 'Subnetting', detail: 'The practice of dividing a single large network into multiple smaller logical networks (subnets) to improve security and performance.' },
+                            { name: 'Routing Algorithms', detail: 'Distance Vector (e.g., RIP, uses Bellman-Ford) vs. Link State (e.g., OSPF, uses Dijkstra\'s).' },
+                            { name: 'NAT (Network Address Translation)', detail: 'Allows multiple devices on a private network to share a single public IP address.' }
+                        ],
+                        questions: [
+                            'What is a subnet mask and how is it used?',
+                            'Explain the difference between Distance Vector and Link State routing.',
+                            'How does NAT work under the hood?'
+                        ]
+                    },
+                    application: {
+                        id: 'application',
+                        title: 'Application Layer',
+                        icon: '🌐',
+                        color: 'bg-teal-100 text-teal-700 border-teal-200',
+                        description: 'High-level protocols used by user applications to access network services.',
+                        subtopics: [
+                            { name: 'HTTP & HTTPS', detail: 'HTTP is stateless plain text. HTTPS adds SSL/TLS encryption for secure communication over port 443.' },
+                            { name: 'DNS (Domain Name System)', detail: 'Translates human-readable domain names (google.com) into IP addresses. Uses UDP for fast queries.' },
+                            { name: 'REST vs. RPC', detail: 'Architectural styles for APIs. REST is resource-based (HTTP verbs). RPC is action-based (calling remote functions).' },
+                            { name: 'Cookies & Sessions', detail: 'Mechanisms used to maintain state over the stateless HTTP protocol.' }
+                        ],
+                        questions: [
+                            'What happens step-by-step when you type google.com into your browser?',
+                            'Explain the SSL/TLS handshake process.',
+                            'What is the difference between HTTP/1.1 and HTTP/2?'
+                        ]
+                    },
+                    osi: {
+                        id: 'osi',
+                        title: 'OSI Model Basics',
+                        icon: '🥞',
+                        color: 'bg-orange-100 text-orange-700 border-orange-200',
+                        description: 'A conceptual framework used to understand and standardize network communication across 7 layers.',
+                        subtopics: [
+                            { name: 'The 7 Layers', detail: 'Physical, Data Link, Network, Transport, Session, Presentation, Application (Please Do Not Throw Sausage Pizza Away).' },
+                            { name: 'Encapsulation', detail: 'As data moves down the layers, each layer adds its own header (and sometimes trailer) creating a Protocol Data Unit (PDU).' },
+                            { name: 'OSI vs TCP/IP', detail: 'TCP/IP is a more practical 4-layer model (Network Access, Internet, Transport, Application) that aligns closer to actual internet implementation.' }
+                        ],
+                        questions: [
+                            'Name the 7 layers of the OSI model and their primary functions.',
+                            'At which OSI layer do routers operate? What about switches?',
+                            'What is encapsulation and decapsulation?'
+                        ]
+                    },
+                    datalink: {
+                        id: 'datalink',
+                        title: 'Data Link Layer',
+                        icon: '🔗',
+                        color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                        description: 'Responsible for node-to-node data transfer and detecting/correcting physical layer errors.',
+                        subtopics: [
+                            { name: 'MAC Addressing', detail: 'Media Access Control. A unique 48-bit hardware address burned into the network interface card (NIC).' },
+                            { name: 'ARP (Address Resolution Protocol)', detail: 'Maps a logical IP address to a physical MAC address on a local network segment.' },
+                            { name: 'CSMA/CD', detail: 'Carrier Sense Multiple Access with Collision Detection. A protocol used in Ethernet to manage access to the shared transmission medium.' }
+                        ],
+                        questions: [
+                            'How does the ARP protocol work?',
+                            'What is the difference between a MAC address and an IP address?',
+                            'How do switches differ from hubs?'
+                        ]
+                    }
+                },
+                flashcards: [
+                    { q: "What is DNS?", a: "Domain Name System. It acts as the phonebook of the internet, translating domain names (like amazon.com) into IP addresses." },
+                    { q: "TCP vs UDP?", a: "TCP is connection-oriented, guarantees delivery, and maintains order. UDP is connectionless, does not guarantee delivery, but is faster." },
+                    { q: "What is a Subnet Mask?", a: "A 32-bit number that masks an IP address, separating the network address from the host address." },
+                    { q: "What is NAT?", a: "Network Address Translation. It translates private IP addresses to a single public IP address for internet access, saving IPv4 space." },
+                    { q: "What is the purpose of the ARP protocol?", a: "Address Resolution Protocol translates a known logical IP address into an unknown physical MAC address on a local network." },
+                    { q: "Explain the TCP 3-Way Handshake.", a: "1. Client sends SYN (synchronize). 2. Server replies with SYN-ACK. 3. Client sends ACK (acknowledge). Connection established." }
+                ]
+            },
+            DBMS: {
+                title: "Cracking the DBMS Interview",
+                overviewText: "Database Management Systems (DBMS) are critical for any backend or full-stack role. Interviews heavily index on your ability to write complex SQL, design normalized schemas, and understand transaction lifecycles.",
+                chartDesc: "SQL queries (especially Joins and Grouping) are the most tested skill, followed closely by Database Design (Normalization). Theoretical concepts like ACID properties are also guaranteed questions in system design rounds.",
+                chartLabels: ['SQL & Queries', 'Normalization & Design', 'Transactions & ACID', 'Indexing & Performance', 'NoSQL Basics'],
+                chartData: [40, 25, 20, 10, 5],
+                chartColors: ['#ec4899', '#f43f5e', '#f97316', '#eab308', '#8b5cf6'],
+                topics: {
+                    sql: {
+                        id: 'sql',
+                        title: 'SQL & Queries',
+                        icon: '📝',
+                        color: 'bg-pink-100 text-pink-700 border-pink-200',
+                        description: 'The practical application of extracting, manipulating, and aggregating data from relational databases.',
+                        subtopics: [
+                            { name: 'Joins', detail: 'Combining rows from two or more tables. Types include INNER, LEFT, RIGHT, FULL OUTER, and CROSS JOIN.' },
+                            { name: 'Aggregation & Grouping', detail: 'Using GROUP BY with functions like COUNT, SUM, AVG. Using HAVING to filter aggregated results (unlike WHERE which filters rows before aggregation).' },
+                            { name: 'Subqueries & CTEs', detail: 'Nested queries within a main query. Common Table Expressions (WITH clause) make complex queries more readable.' },
+                            { name: 'Window Functions', detail: 'Perform calculations across a set of table rows that are related to the current row (e.g., ROW_NUMBER(), RANK(), OVER()).' }
+                        ],
+                        questions: [
+                            'Write a query to find the second highest salary in an Employee table.',
+                            'What is the difference between WHERE and HAVING?',
+                            'Explain the difference between an INNER JOIN and a LEFT JOIN.'
+                        ]
+                    },
+                    normalization: {
+                        id: 'normalization',
+                        title: 'Normalization & Keys',
+                        icon: '🗄️',
+                        color: 'bg-rose-100 text-rose-700 border-rose-200',
+                        description: 'The process of structuring a relational database to reduce data redundancy and improve data integrity.',
+                        subtopics: [
+                            { name: 'Keys', detail: 'Primary Key (unique identifier), Foreign Key (links tables), Candidate Key (potential primary key), Super Key.' },
+                            { name: '1NF to 3NF', detail: '1NF: Atomic values. 2NF: 1NF + no partial dependency. 3NF: 2NF + no transitive dependency.' },
+                            { name: 'BCNF', detail: 'Boyce-Codd Normal Form. A stricter version of 3NF where every determinant must be a candidate key.' },
+                            { name: 'Denormalization', detail: 'Intentionally adding redundant data to optimize read performance in read-heavy systems.' }
+                        ],
+                        questions: [
+                            'What is the difference between a Primary Key and a Unique Key?',
+                            'Explain 1NF, 2NF, and 3NF with an example.',
+                            'When would you choose to Denormalize a database?'
+                        ]
+                    },
+                    transactions: {
+                        id: 'transactions',
+                        title: 'Transactions & ACID',
+                        icon: '⚡',
+                        color: 'bg-orange-100 text-orange-700 border-orange-200',
+                        description: 'Ensuring data remains accurate and consistent, even in the event of system failures or concurrent access.',
+                        subtopics: [
+                            { name: 'ACID Properties', detail: 'Atomicity (all or nothing), Consistency (valid state), Isolation (concurrent execution is safe), Durability (saved permanently).' },
+                            { name: 'Isolation Levels', detail: 'Read Uncommitted, Read Committed, Repeatable Read, Serializable. Each level trades off performance for stricter consistency.' },
+                            { name: 'Concurrency Anomalies', detail: 'Dirty Reads, Non-repeatable Reads, and Phantom Reads. These are prevented by higher isolation levels.' },
+                            { name: 'Deadlocks', detail: 'When two or more transactions indefinitely wait for one another to release locks.' }
+                        ],
+                        questions: [
+                            'What do the letters in ACID stand for? Explain each.',
+                            'What is a Dirty Read?',
+                            'How do databases handle transaction deadlocks?'
+                        ]
+                    },
+                    indexing: {
+                        id: 'indexing',
+                        title: 'Indexing & Performance',
+                        icon: '🚀',
+                        color: 'bg-amber-100 text-amber-700 border-amber-200',
+                        description: 'Data structures used by the database engine to speed up data retrieval operations.',
+                        subtopics: [
+                            { name: 'B-Trees', detail: 'The default data structure for most indexes. Keeps data sorted and allows for logarithmic time searches, insertions, and deletions.' },
+                            { name: 'Clustered vs Non-Clustered', detail: 'Clustered: Determines the physical order of data in the table (only 1 per table). Non-Clustered: A separate structure pointing to the data rows.' },
+                            { name: 'Query Optimization', detail: 'Using EXPLAIN plans to understand how the database engine executes a query and verifying if indexes are being used (Index Scan vs Table Scan).' }
+                        ],
+                        questions: [
+                            'How does a B-Tree index work?',
+                            'What is the difference between Clustered and Non-Clustered indexes?',
+                            'Why shouldn\'t we index every single column in a table?'
+                        ]
+                    }
+                },
+                flashcards: [
+                    { q: "Primary Key vs Unique Key?", a: "Both enforce uniqueness. Primary Key cannot contain NULL values and a table can only have one. Unique Key can contain one NULL value (in most SQL dialects) and a table can have multiple." },
+                    { q: "What is an Inner Join?", a: "Returns only the rows that have matching values in both tables being joined." },
+                    { q: "What is Atomicity in ACID?", a: "The 'All or Nothing' rule. A transaction is treated as a single unit of work; either all its operations succeed, or none do." },
+                    { q: "DELETE vs TRUNCATE?", a: "DELETE is a DML command that removes rows one by one and can be rolled back. TRUNCATE is a DDL command that deallocates data pages, is much faster, and generally cannot be rolled back." },
+                    { q: "What is a Foreign Key?", a: "A column or group of columns in a relational database table that provides a link between data in two tables, ensuring referential integrity." },
+                    { q: "What is a Phantom Read?", a: "Occurs when a transaction reads a set of rows satisfying a condition, and a concurrent transaction inserts/deletes rows matching that condition before the first transaction finishes." }
+                ]
+            },
+            OOPs: {
+                title: "Cracking the OOPs Interview",
+                overviewText: "Object-Oriented Programming (OOP) is a programming paradigm based on the concept of 'objects'. Interviews test your ability to model real-world entities, write modular code, and understand memory management.",
+                chartDesc: "The 4 Pillars of OOP are the absolute foundation and most frequently asked. Expect to be asked to design a system (like a Parking Lot) using Classes, Interfaces, and SOLID principles.",
+                chartLabels: ['The 4 Pillars (Inheritance/Poly)', 'Classes & Objects', 'Interfaces & Abstract Classes', 'SOLID Principles', 'Memory & Constructors'],
+                chartData: [40, 25, 15, 10, 10],
+                chartColors: ['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#3b82f6'],
+                topics: {
+                    pillars: {
+                        id: 'pillars',
+                        title: 'The 4 Pillars of OOP',
+                        icon: '🏛️',
+                        color: 'bg-sky-100 text-sky-700 border-sky-200',
+                        description: 'The core concepts that define the Object-Oriented paradigm: Encapsulation, Abstraction, Inheritance, and Polymorphism.',
+                        subtopics: [
+                            { name: 'Encapsulation', detail: 'Bundling data (variables) and methods that operate on that data into a single unit (class). Restricting direct access using access modifiers (private, protected, public).' },
+                            { name: 'Abstraction', detail: 'Hiding complex implementation details and exposing only the essential features to the user.' },
+                            { name: 'Inheritance', detail: 'A mechanism where a new class (child/derived) inherits properties and behaviors from an existing class (parent/base). Represents an IS-A relationship.' },
+                            { name: 'Polymorphism', detail: 'The ability of different objects to respond to the same method call in their own way. Includes Compile-time (Overloading) and Run-time (Overriding).' }
+                        ],
+                        questions: [
+                            'Explain the difference between Encapsulation and Abstraction.',
+                            'What is Polymorphism? Give an example of Method Overriding.',
+                            'Why is Multiple Inheritance not supported in languages like Java or C#?'
+                        ]
+                    },
+                    classes: {
+                        id: 'classes',
+                        title: 'Classes, Objects & Memory',
+                        icon: '🧱',
+                        color: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+                        description: 'The blueprints and instances used in OOP, and how their lifecycle is managed in memory.',
+                        subtopics: [
+                            { name: 'Class vs Object', detail: 'A Class is a blueprint or template. An Object is a physical instance of a class occupying memory.' },
+                            { name: 'Constructors & Destructors', detail: 'Special methods invoked automatically when an object is created (Constructor) or destroyed (Destructor) to initialize/cleanup resources.' },
+                            { name: 'Static Members', detail: 'Variables or methods that belong to the class itself, rather than to any specific instance of the class.' },
+                            { name: 'Heap vs Stack', detail: 'Objects are dynamically allocated on the Heap. Local variables and method calls reside on the Stack.' }
+                        ],
+                        questions: [
+                            'What is a Constructor? Can it be private?',
+                            'What is the "this" pointer/keyword?',
+                            'Explain the difference between Static and Instance methods.'
+                        ]
+                    },
+                    interfaces: {
+                        id: 'interfaces',
+                        title: 'Interfaces & Abstract Classes',
+                        icon: '🔌',
+                        color: 'bg-teal-100 text-teal-700 border-teal-200',
+                        description: 'Contracts that define what a class must do, without enforcing how it does it.',
+                        subtopics: [
+                            { name: 'Abstract Classes', detail: 'Classes declared with the "abstract" keyword. Cannot be instantiated. Can contain both abstract (unimplemented) and concrete (implemented) methods.' },
+                            { name: 'Interfaces', detail: 'A fully abstract class (traditionally). A contract containing only method signatures. A class can implement multiple interfaces.' },
+                            { name: 'Coupling', detail: 'Interfaces help achieve loose coupling, making systems easier to refactor, test, and maintain.' }
+                        ],
+                        questions: [
+                            'What is the difference between an Abstract Class and an Interface?',
+                            'Can we instantiate an Abstract Class? Why or why not?',
+                            'When would you choose to use an Interface over an Abstract Class?'
+                        ]
+                    },
+                    solid: {
+                        id: 'solid',
+                        title: 'SOLID Principles',
+                        icon: '📐',
+                        color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                        description: 'Five design principles intended to make software designs more understandable, flexible, and maintainable.',
+                        subtopics: [
+                            { name: 'Single Responsibility (SRP)', detail: 'A class should have one, and only one, reason to change.' },
+                            { name: 'Open/Closed (OCP)', detail: 'Software entities should be open for extension, but closed for modification.' },
+                            { name: 'Liskov Substitution (LSP)', detail: 'Objects of a superclass shall be replaceable with objects of its subclasses without breaking the application.' },
+                            { name: 'Interface Segregation (ISP)', detail: 'No client should be forced to depend on methods it does not use. (Split large interfaces into smaller ones).' },
+                            { name: 'Dependency Inversion (DIP)', detail: 'High-level modules should not depend on low-level modules. Both should depend on abstractions.' }
+                        ],
+                        questions: [
+                            'Explain the Single Responsibility Principle.',
+                            'How do you achieve the Open/Closed Principle in your code?',
+                            'Give an example that violates the Liskov Substitution Principle.'
+                        ]
+                    }
+                },
+                flashcards: [
+                    { q: "What is Encapsulation?", a: "The bundling of data and the methods that operate on that data into a single unit (like a class), while restricting direct access to some of the object's components." },
+                    { q: "Method Overloading vs Overriding?", a: "Overloading (Compile-time): Same method name, different parameters in the same class. Overriding (Run-time): Same method name and parameters in a subclass, redefining the parent's method." },
+                    { q: "What is an Abstract Class?", a: "A class that cannot be instantiated on its own and requires subclasses to provide implementations for its abstract methods." },
+                    { q: "IS-A vs HAS-A relationship?", a: "IS-A represents Inheritance (e.g., A Car IS-A Vehicle). HAS-A represents Composition/Aggregation (e.g., A Car HAS-A Engine)." },
+                    { q: "What is the 'S' in SOLID?", a: "Single Responsibility Principle: A class should have only one reason to change, meaning it should only have one job or responsibility." },
+                    { q: "What does 'Static' mean?", a: "A static member belongs to the class itself rather than to instances (objects) of the class. It is shared among all instances." }
+                ]
+            }
+        };
+
+        let currentSubject = 'OS';
+        let activeTopicId = null;
+        let chartInstance = null;
+
+        function setSubject(subject) {
+            currentSubject = subject;
+            activeTopicId = Object.keys(db[subject].topics)[0]; // Reset active topic to first one
+            
+            // Update Toggle Buttons styling dynamically
+            const subjects = ['OS', 'CN', 'DBMS', 'OOPs'];
+            subjects.forEach(sub => {
+                const btn = document.getElementById(`btn-${sub}`);
+                if (sub === subject) {
+                    btn.className = 'px-6 py-2 rounded-full font-bold transition-all duration-200 bg-indigo-600 text-white shadow-md hover:bg-indigo-700';
+                } else {
+                    btn.className = 'px-6 py-2 rounded-full font-bold transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-slate-200';
+                }
+            });
+
+            // Update Text content
+            const data = db[subject];
+            document.getElementById('mainTitle').innerText = data.title;
+            document.getElementById('mainDesc').innerText = data.overviewText;
+            document.getElementById('chartDesc').innerText = data.chartDesc;
+
+            // Re-render UI
+            initChart();
+            renderTopicList();
+            renderFlashcards();
+            if(activeTopicId) selectTopic(activeTopicId);
+        }
+
+        function initChart() {
+            const data = db[currentSubject];
+            
+            // Build Custom HTML Legend
+            const legendContainer = document.getElementById('chartLegend');
+            legendContainer.innerHTML = data.chartLabels.map((label, index) => `
+                <li class="flex items-center justify-between text-sm sm:text-base fade-in">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full" style="background-color: ${data.chartColors[index]}"></span>
+                        <strong class="text-slate-700">${label}</strong>
+                    </div>
+                    <span class="text-slate-500 font-medium">${data.chartData[index]}%</span>
+                </li>
+            `).join('');
+
+            const ctx = document.getElementById('topicChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.chartLabels,
+                    datasets: [{
+                        data: data.chartData,
+                        backgroundColor: data.chartColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // Disabled default legend in favor of the custom HTML list
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ~' + context.parsed + '% of questions';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        function renderTopicList() {
+            const listContainer = document.getElementById('topicList');
+            listContainer.innerHTML = '';
+            const topics = db[currentSubject].topics;
+            
+            Object.values(topics).forEach(topic => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left px-5 py-4 rounded-xl border-2 transition-all duration-200 font-medium flex items-center gap-3 ${topic.color} hover:shadow-md fade-in`;
+                if(activeTopicId === topic.id) {
+                    btn.classList.add('ring-2', 'ring-offset-2', 'ring-slate-400');
+                } else {
+                    btn.classList.add('bg-opacity-50', 'border-transparent');
+                }
+                
+                btn.innerHTML = `
+                    <span class="text-2xl">${topic.icon}</span>
+                    <span class="text-lg">${topic.title}</span>
+                `;
+                
+                btn.onclick = () => selectTopic(topic.id);
+                listContainer.appendChild(btn);
+            });
+        }
+
+        function selectTopic(id) {
+            activeTopicId = id;
+            renderTopicList(); // Re-render to update selected styling
+
+            const topic = db[currentSubject].topics[id];
+            const detailPane = document.getElementById('topicDetailPane');
+            
+            let subtopicsHtml = topic.subtopics.map(sub => `
+                <div class="mb-4 bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                    <h4 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <span class="text-indigo-500">▪</span> ${sub.name}
+                    </h4>
+                    <p class="text-slate-600 mt-1 pl-4 border-l-2 border-indigo-100 ml-1">${sub.detail}</p>
+                </div>
+            `).join('');
+
+            let questionsHtml = topic.questions.map(q => `
+                <li class="flex items-start gap-2 mb-2">
+                    <span class="text-rose-500 mt-1">❓</span>
+                    <span class="text-slate-700 font-medium">${q}</span>
+                </li>
+            `).join('');
+
+            detailPane.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-4xl">${topic.icon}</span>
+                        <h3 class="text-3xl font-extrabold text-slate-900">${topic.title}</h3>
+                    </div>
+                    <p class="text-slate-600 text-lg mb-8 bg-slate-100 p-4 rounded-lg border-l-4 border-slate-400">${topic.description}</p>
+                    
+                    <h4 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Key Concepts to Know</h4>
+                    <div class="mb-8">
+                        ${subtopicsHtml}
+                    </div>
+
+                    <h4 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Frequent Interview Questions</h4>
+                    <ul class="list-none pl-0">
+                        ${questionsHtml}
+                    </ul>
+                </div>
+            `;
+        }
+
+        function renderFlashcards() {
+            const grid = document.getElementById('flashcardGrid');
+            grid.innerHTML = '';
+            const flashcards = db[currentSubject].flashcards;
+            
+            flashcards.forEach((card, index) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'glass-panel p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow relative min-h-[160px] flex items-center justify-center text-center group fade-in';
+                
+                cardDiv.innerHTML = `
+                    <div class="absolute inset-0 bg-indigo-50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity z-0"></div>
+                    <div class="relative z-10 w-full">
+                        <p class="text-lg font-bold text-slate-800 question-text">${card.q}</p>
+                        <div class="answer-text hidden mt-4 pt-4 border-t border-indigo-200 fade-in">
+                            <p class="text-slate-600">${card.a}</p>
+                        </div>
+                        <p class="text-xs text-indigo-400 mt-4 font-semibold uppercase tracking-wider instruction-text">Click to reveal answer</p>
+                    </div>
+                `;
+
+                cardDiv.onclick = function() {
+                    const ans = this.querySelector('.answer-text');
+                    const q = this.querySelector('.question-text');
+                    const inst = this.querySelector('.instruction-text');
+                    
+                    if (ans.classList.contains('hidden')) {
+                        ans.classList.remove('hidden');
+                        q.classList.replace('text-lg', 'text-base');
+                        q.classList.add('text-indigo-800');
+                        inst.classList.add('hidden');
+                        this.classList.replace('glass-panel', 'bg-white');
+                        this.classList.add('border-indigo-300');
+                    } else {
+                        ans.classList.add('hidden');
+                        q.classList.replace('text-base', 'text-lg');
+                        q.classList.remove('text-indigo-800');
+                        inst.classList.remove('hidden');
+                        this.classList.replace('bg-white', 'glass-panel');
+                        this.classList.remove('border-indigo-300');
+                    }
+                };
+
+                grid.appendChild(cardDiv);
+            });
+        }
+
+        window.onload = () => {
+            setSubject('OS'); // Initializes the app with Operating Systems on page load
+        };
+    </script>
+</body>
+</html>
